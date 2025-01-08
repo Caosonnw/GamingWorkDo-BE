@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model brands {
+  brand_id   Int        @id @default(autoincrement())
+  brand_name String?    @db.VarChar(50)
+  products   products[]
+}
+
+model cart {
+  cart_id  Int       @id @default(autoincrement())
+  user_id  Int?
+  quantity Int?
+  added_at DateTime? @db.DateTime(0)
+  users    users?    @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "cart_ibfk_1")
+
+  @@index([user_id], map: "user_id")
+}
+
+model categories {
+  category_id   Int        @id @default(autoincrement())
+  category_name String?    @db.VarChar(255)
+  description   String?    @db.Text
+  products      products[]
+}
+
+model order_details {
+  order_details_id Int       @id @default(autoincrement())
+  order_id         Int?
+  product_id       Int?
+  quantity         Int?
+  unit_price       Int?
+  orders           orders?   @relation(fields: [order_id], references: [order_id], onDelete: NoAction, onUpdate: NoAction, map: "order_details_ibfk_1")
+  products         products? @relation(fields: [product_id], references: [product_id], onDelete: NoAction, onUpdate: NoAction, map: "order_details_ibfk_2")
+
+  @@index([order_id], map: "order_id")
+  @@index([product_id], map: "product_id")
+}
+
+model orders {
+  order_id      Int             @id @default(autoincrement())
+  user_id       Int?
+  order_date    DateTime?       @db.DateTime(0)
+  total_amount  Int?
+  status_order  String?         @db.VarChar(50)
+  order_details order_details[]
+  users         users?          @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "orders_ibfk_1")
+
+  @@index([user_id], map: "user_id")
+}
+
+model product_variants {
+  variant_id    Int       @id @default(autoincrement())
+  product_id    Int?
+  variant_name  String?   @db.VarChar(255)
+  variant_price Int?
+  product_image String?   @db.VarChar(255)
+  stock         Boolean?
+  attributes    Json?
+  created_at    DateTime? @db.DateTime(0)
+  products      products? @relation(fields: [product_id], references: [product_id], onDelete: NoAction, onUpdate: NoAction, map: "product_variants_ibfk_1")
+
+  @@index([product_id], map: "product_id")
+}
+
+model products {
+  product_id       Int                @id @default(autoincrement())
+  product_name     String?            @db.VarChar(255)
+  description      String?            @db.Text
+  category_id      Int?
+  brand_id         Int?
+  product_status   String?            @db.VarChar(50)
+  update_at        DateTime?          @db.DateTime(0)
+  created_at       DateTime?          @db.DateTime(0)
+  order_details    order_details[]
+  product_variants product_variants[]
+  categories       categories?        @relation(fields: [category_id], references: [category_id], onDelete: NoAction, onUpdate: NoAction, map: "products_ibfk_1")
+  brands           brands?            @relation(fields: [brand_id], references: [brand_id], onDelete: NoAction, onUpdate: NoAction, map: "products_ibfk_2")
+
+  @@index([brand_id], map: "brand_id")
+  @@index([category_id], map: "category_id")
+}
+
+model users {
+  user_id       Int       @id @default(autoincrement())
+  email         String?   @db.VarChar(50)
+  full_name     String?   @db.VarChar(50)
+  password      String?   @db.VarChar(255)
+  gender        Boolean?
+  phone_number  Int?
+  date_of_birth DateTime? @db.Date
+  role          String?   @db.VarChar(50)
+  created_by    Int?
+  refresh_token String?   @db.Text
+  cart          cart[]
+  orders        orders[]
+  users         users?    @relation("usersTousers", fields: [created_by], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "users_ibfk_1")
+  other_users   users[]   @relation("usersTousers")
+
+  @@index([created_by], map: "created_by")
+}

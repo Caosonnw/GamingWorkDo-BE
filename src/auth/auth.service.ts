@@ -1,5 +1,6 @@
 import { LoginUserDto } from '@/auth/auth-dto/login-user.dto'
-import { RegisterUserDto } from '@/auth/auth-dto/register-user-dto'
+import { RegisterUserDto, Role } from '@/auth/auth-dto/register-user-dto'
+import { generateRandomString } from '@/utils/helper'
 import { Response } from '@/utils/utils'
 import { HttpException, HttpStatus, Injectable, OnModuleInit } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
@@ -54,16 +55,6 @@ export class AuthService implements OnModuleInit {
     }
   }
 
-  generateRandomString = (length) => {
-    let result = ''
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-    const charactersLength = characters.length
-    for (let i = 0; i < length; i++) {
-      result += characters.charAt(Math.floor(Math.random() * charactersLength))
-    }
-    return result
-  }
-
   async register(RegisterUserDto: RegisterUserDto) {
     const { full_name, email, password, gender, date_of_birth, phone_number } = RegisterUserDto
     try {
@@ -82,18 +73,14 @@ export class AuthService implements OnModuleInit {
         gender: true,
         date_of_birth: formattedDateOfBirth,
         phone_number,
-        role: 'USER',
+        role: Role.USER,
         refresh_token: ''
       }
 
       await this.prisma.users.create({
         // data: newData
       })
-      return {
-        message: 'Sign up successfully!',
-        status: HttpStatus.CREATED,
-        date: new Date()
-      }
+      return Response('User created successfully!', HttpStatus.CREATED)
     } catch (error) {
       console.log(error)
       if (error instanceof HttpException) {
@@ -119,7 +106,7 @@ export class AuthService implements OnModuleInit {
         throw new HttpException('Password is incorrect!', HttpStatus.BAD_REQUEST)
       }
 
-      const key = this.generateRandomString(6)
+      const key = generateRandomString(6)
       const payload = { user_id: user.user_id, role: user.role, key }
 
       const accessToken = this.jwtService.sign(payload, {
@@ -147,7 +134,7 @@ export class AuthService implements OnModuleInit {
       // Set cookies
       res.cookie('accessToken', accessToken, {
         httpOnly: true,
-        secure: false,
+        secure: process.env.NODE_ENV === 'production',
         maxAge: parseInt(this.configService.get<string>('ACCESS_TOKEN_EXPIRES_IN'), 10),
         sameSite: 'lax',
         path: '/'
@@ -155,13 +142,16 @@ export class AuthService implements OnModuleInit {
 
       res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
-        secure: false,
+        secure: process.env.NODE_ENV === 'production',
         maxAge: parseInt(this.configService.get<string>('REFRESH_TOKEN_EXPIRES_IN'), 10),
         sameSite: 'lax',
         path: '/'
       })
 
-      return Response(accessToken, 'Login successfully!', HttpStatus.OK)
+      return Response('Login successfully!', HttpStatus.OK, {
+        accessToken: accessToken,
+        refreshToken: refreshToken
+      })
     } catch (error) {
       if (error instanceof HttpException) {
         throw error
@@ -210,77 +200,83 @@ export class AuthService implements OnModuleInit {
     return accessToken
   }
 
-  async refreshToken(token: string, res) {
+  async refreshToken(refreshToken, res) {
     try {
-      const isValidRefreshToken = await this.jwtService.verifyAsync(token, {
+      const decoded = await this.jwtService.verifyAsync(refreshToken, {
         secret: process.env.JWT_SECRET_REFRESH
       })
 
-      if (!isValidRefreshToken) {
-        throw new HttpException('Invalid refresh token', HttpStatus.UNAUTHORIZED)
+      if (!decoded || !decoded.user_id) {
+        throw new HttpException('Invalid token payload', HttpStatus.UNAUTHORIZED)
       }
-
-      const decoded = (await this.jwtService.decode(token)) as any
 
       const user = await this.prisma.users.findFirst({
         where: { user_id: decoded.user_id }
       })
 
-      if (!user || user.refresh_token !== token) {
-        throw new HttpException('Invalid user or refresh token', HttpStatus.UNAUTHORIZED)
+      if (!user) {
+        throw new HttpException('User not found', HttpStatus.UNAUTHORIZED)
       }
 
-      // Tạo mới access token
+      // Xác minh token
+      await this.jwtService.verifyAsync(refreshToken, {
+        secret: process.env.JWT_SECRET_REFRESH
+      })
+
+      // Tạo token mới
       const payload = {
         user_id: user.user_id,
         role: user.role,
         key: decoded.key
       }
 
-      const accessToken = this.jwtService.sign(payload, {
+      const newAccessToken = this.jwtService.sign(payload, {
         expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN,
         secret: process.env.JWT_SECRET
       })
 
-      const refreshToken = this.jwtService.sign(payload, {
+      const newRefreshToken = this.jwtService.sign(payload, {
         expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN,
         secret: process.env.JWT_SECRET_REFRESH
       })
 
-      // Cập nhật refresh token mới vào database
+      // Lưu token mới vào DB
       await this.prisma.users.update({
         where: { user_id: user.user_id },
-        data: { refresh_token: refreshToken }
+        data: { refresh_token: newRefreshToken }
       })
 
-      // Set lại cookie
-      res.cookie('accessToken', accessToken, {
+      // Set cookies
+      res.cookie('accessToken', newAccessToken, {
         httpOnly: true,
-        secure: false, // Bật khi dùng HTTPS
-        maxAge: parseInt(process.env.ACCESS_TOKEN_EXPIRES_IN, 10),
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: parseInt(process.env.ACCESS_TOKEN_EXPIRES_IN, 10) * 1000,
         sameSite: 'lax'
       })
 
-      res.cookie('refreshToken', refreshToken, {
+      res.cookie('refreshToken', newRefreshToken, {
         httpOnly: true,
-        secure: false,
-        maxAge: parseInt(process.env.REFRESH_TOKEN_EXPIRES_IN, 10),
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: parseInt(process.env.REFRESH_TOKEN_EXPIRES_IN, 10) * 1000,
         sameSite: 'lax'
       })
 
-      return {
-        message: 'Token refreshed',
-        status: HttpStatus.OK,
-        date: new Date()
-      }
+      return Response('Token refreshed successfully!', HttpStatus.OK, {
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken
+      })
     } catch (error) {
-      console.error('Error during refresh token process:', error)
+      console.error('Error during token refresh:', error)
 
-      if (error instanceof HttpException) {
-        throw error
+      if (error.name === 'TokenExpiredError') {
+        throw new HttpException('Refresh token expired', HttpStatus.UNAUTHORIZED)
       }
 
-      throw new HttpException('An error occurred while refreshing token', HttpStatus.INTERNAL_SERVER_ERROR)
+      if (error.name === 'JsonWebTokenError') {
+        throw new HttpException('Invalid token', HttpStatus.UNAUTHORIZED)
+      }
+
+      throw new HttpException('An error occurred while refreshing the token', HttpStatus.INTERNAL_SERVER_ERROR)
     }
   }
 }

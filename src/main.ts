@@ -14,30 +14,13 @@ async function bootstrap() {
     .setTitle('Gaming Work Do Swagger')
     .setDescription('Gaming Work Do API description')
     .setVersion('1.0')
-    .addBearerAuth(
-      {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT',
-        name: 'JWT',
-        description: 'Enter JWT token',
-        in: 'header'
-      },
-      'jwt'
-    )
+    .addBearerAuth()
     .build()
   const document = SwaggerModule.createDocument(app, config)
   SwaggerModule.setup('/swagger', app, document)
 
-  const port = 8080
+  const port = process.env.PORT || 8080
   await app.listen(port)
-  console.log(`Swagger: http://localhost:${8080}/swagger`)
+  console.log(`Swagger: http://localhost:${port}/swagger`)
 }
 bootstrap()
-
-// {
-//   type: 'http',
-//   scheme: 'bearer',
-//   bearerFormat: 'JWT'
-// },
-// 'jwt'

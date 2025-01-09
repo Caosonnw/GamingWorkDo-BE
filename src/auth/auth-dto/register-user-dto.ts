@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger'
 import { IsDateString, IsEmail, IsInt, IsNotEmpty, IsOptional, IsString, Length } from 'class-validator'
 
-enum Role {
+export enum Role {
   Owner = 'OWNER',
   ADMIN = 'ADMIN',
   USER = 'USER'
@@ -41,12 +41,6 @@ export class RegisterUserDto {
   @IsString()
   @Length(1, 20)
   phone_number?: string
-
-  @IsString()
-  @IsNotEmpty()
-  @Length(1, 50)
-  @ApiProperty({ enum: Role })
-  role: string = Role.USER
 
   @IsString()
   refresh_token?: string

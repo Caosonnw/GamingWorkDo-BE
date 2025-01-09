@@ -7,17 +7,11 @@ import { JwtStrategy } from '@/auth/guards/strategies/jwt.strategy'
 import { UsersModule } from './users/users.module'
 import { APP_GUARD } from '@nestjs/core'
 import { RolesGuard } from '@/auth/guards/roles/roles.guard'
+import { JwtAuthGuard } from '@/auth/guards/ jwt-auth.guard'
 
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true }), AuthModule, UsersModule],
   controllers: [AppController],
-  providers: [
-    AppService,
-    JwtStrategy,
-    {
-      provide: APP_GUARD,
-      useClass: RolesGuard
-    }
-  ]
+  providers: [AppService, JwtStrategy]
 })
 export class AppModule {}

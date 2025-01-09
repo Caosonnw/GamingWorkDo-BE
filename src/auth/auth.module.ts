@@ -11,7 +11,7 @@ import { JwtAuthGuard } from '@/auth/guards/ jwt-auth.guard'
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
+    ConfigModule,
     PassportModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET,
@@ -19,6 +19,7 @@ import { JwtAuthGuard } from '@/auth/guards/ jwt-auth.guard'
     })
   ],
   controllers: [AuthController],
-  providers: [AuthService, PrismaClient, JwtStrategy, JwtAuthGuard, RolesGuard]
+  providers: [AuthService, PrismaClient, JwtAuthGuard, JwtStrategy, RolesGuard],
+  exports: [AuthService]
 })
 export class AuthModule {}

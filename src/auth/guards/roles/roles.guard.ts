@@ -14,8 +14,6 @@ export class RolesGuard implements CanActivate {
     const request = context.switchToHttp().getRequest()
     const user = request.user
 
-    console.log('Request User in RolesGuard:', user)
-
     if (!user) {
       throw new ForbiddenException('User not authenticated')
     }
@@ -23,11 +21,3 @@ export class RolesGuard implements CanActivate {
     return roles.some((role) => user?.role === role)
   }
 }
-// const hasRole = requiredRoles.some((role) => user.role === role)
-//     console.log('Has Role:', hasRole)
-
-//     if (!hasRole) {
-//       throw new ForbiddenException('Access Denied: Insufficient permissions')
-//     }
-
-//     return hasRole // Cho phép truy cập nếu có ít nhất một role hợp lệ

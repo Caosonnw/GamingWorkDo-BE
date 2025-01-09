@@ -23,12 +23,7 @@ export class AuthController {
 
   @ApiExcludeEndpoint()
   @Post('refresh-token')
-  async refreshToken(@Headers() headers, @Res({ passthrough: true }) res) {
-    const token = headers.authorization?.split(' ')[1]
-    if (!token) {
-      throw new HttpException('Token not provided', HttpStatus.BAD_REQUEST)
-    }
-
-    return await this.authService.refreshToken(token, res)
+  async refreshToken(@Body() refreshToken, @Res({ passthrough: true }) res) {
+    return await this.authService.refreshToken(refreshToken.refreshToken, res)
   }
 }

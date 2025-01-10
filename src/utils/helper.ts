@@ -15,3 +15,15 @@ export function generateRandomString(length: number): string {
   }
   return result
 }
+
+import { formatISO } from 'date-fns'
+import { toZonedTime } from 'date-fns-tz'
+
+export function newDate() {
+  const now = new Date()
+  const timeZone = 'Asia/Saigon'
+  const vnTime = toZonedTime(now, timeZone)
+
+  const formattedDate = formatISO(vnTime)
+  return formattedDate
+}

@@ -17,11 +17,3 @@ export const Response = <T>(message: string, statusCode: HttpStatus, data?: T | 
     date: format(new Date(), 'yyyy-MM-dd HH:mm:ss', { locale: vi })
   }
 }
-
-export const ErrorResponse = (message: string, statusCode: HttpStatus): ApiResponse<null> => {
-  return {
-    message,
-    statusCode,
-    date: format(new Date(), 'yyyy-MM-dd HH:mm:ss', { locale: vi })
-  }
-}

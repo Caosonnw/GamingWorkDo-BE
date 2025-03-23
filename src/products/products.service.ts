@@ -15,8 +15,7 @@ export class ProductsService {
           categories: {
             select: {
               category_id: true,
-              category_name: true,
-              description: true
+              category_name: true
             }
           },
           brands: {
@@ -28,11 +27,15 @@ export class ProductsService {
           product_variants: {
             select: {
               variant_id: true,
+              product_id: true,
               variant_name: true,
               variant_price: true,
-              product_image: true,
-              stock: true,
+              product_image_main: true,
+              product_image_hover: true,
+              product_status: true,
+              rating: true,
               attributes: true,
+              update_at: true,
               created_at: true
             }
           }
@@ -44,86 +47,16 @@ export class ProductsService {
         return Response('Get the product list successfully', HttpStatus.OK, data)
       }
     } catch (error) {
+      console.log(error)
       throw new HttpException('An error occurred during the process', HttpStatus.INTERNAL_SERVER_ERROR)
     }
   }
+
+  async getProductById() {}
+
+  async createProductWithVariants() {}
 
   async getProductPagination() {}
-
-  async getProductById(product_id) {
-    try {
-      const data = await this.prisma.products.findUnique({
-        where: {
-          product_id: parseInt(product_id)
-        },
-        include: {
-          categories: {
-            select: {
-              category_id: true,
-              category_name: true,
-              description: true
-            }
-          },
-          brands: {
-            select: {
-              brand_id: true,
-              brand_name: true
-            }
-          },
-          product_variants: {
-            select: {
-              variant_id: true,
-              variant_name: true,
-              variant_price: true,
-              product_image: true,
-              stock: true,
-              attributes: true,
-              created_at: true
-            }
-          }
-        }
-      })
-      if (!data) {
-        return Response('Product not found', HttpStatus.NOT_FOUND)
-      } else {
-        return Response('Get the product successfully', HttpStatus.OK, data)
-      }
-    } catch (error) {
-      throw new HttpException('An error occurred during the process', HttpStatus.INTERNAL_SERVER_ERROR)
-    }
-  }
-
-  async createProductWithVariants(data: CreateProductWithVariantsDto) {
-    return this.prisma.$transaction(async (prisma) => {
-      // Tạo product
-      const product = await prisma.products.create({
-        data: {
-          product_name: data.product_name,
-          description: data.description,
-          category_id: data.category_id,
-          brand_id: data.brand_id,
-          product_status: data.product_status,
-          created_at: newDate(),
-          update_at: newDate()
-        }
-      })
-
-      // Tạo các variants liên quan
-      if (data.variants && data.variants.length > 0) {
-        const variantsData = data.variants.map((variant) => ({
-          ...variant,
-          product_id: product.product_id,
-          created_at: newDate()
-        }))
-
-        await prisma.product_variants.createMany({
-          data: variantsData
-        })
-      }
-
-      return Response('Create product successfully', HttpStatus.CREATED, product)
-    })
-  }
 
   async updateProduct() {}
 

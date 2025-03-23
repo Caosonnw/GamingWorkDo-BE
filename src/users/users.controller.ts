@@ -16,6 +16,19 @@ export class UsersController {
 
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
+  @Get('me')
+  async getMe(@Req() req) {
+    const userId = req.user.user_id
+    if (userId) {
+      const userResponse = await this.usersService.getUserById(userId)
+      return Response('Get me successfully!', HttpStatus.OK, userResponse.data)
+    } else {
+      return Response('No user found!', HttpStatus.NOT_FOUND)
+    }
+  }
+
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.Owner)
   @Get('get-all-users')
   getAllUsers() {
@@ -34,7 +47,7 @@ export class UsersController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.Owner, UserRole.USER)
   @Get('test-me')
-  getMe(@Req() req) {
+  getMeTest(@Req() req) {
     if (req.user) {
       return Response('Get me successfully!', HttpStatus.OK, req.user)
     } else {

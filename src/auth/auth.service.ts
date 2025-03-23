@@ -7,6 +7,7 @@ import { ConfigService } from '@nestjs/config'
 import { JwtService } from '@nestjs/jwt'
 import { PrismaClient } from '@prisma/client'
 import * as bcrypt from 'bcrypt'
+import * as ms from 'ms'
 
 @Injectable()
 export class AuthService implements OnModuleInit {
@@ -109,6 +110,9 @@ export class AuthService implements OnModuleInit {
       const key = generateRandomString(6)
       const payload = { user_id: user.user_id, role: user.role, key }
 
+      const accessTokenMaxAge = ms(process.env.ACCESS_TOKEN_EXPIRES_IN)
+      const refreshTokenMaxAge = ms(process.env.REFRESH_TOKEN_EXPIRES_IN)
+
       const accessToken = this.jwtService.sign(payload, {
         expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN,
         algorithm: 'HS256',
@@ -135,7 +139,7 @@ export class AuthService implements OnModuleInit {
       res.cookie('accessToken', accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        maxAge: parseInt(this.configService.get<string>('ACCESS_TOKEN_EXPIRES_IN'), 10),
+        maxAge: accessTokenMaxAge,
         sameSite: 'lax',
         path: '/'
       })
@@ -143,7 +147,7 @@ export class AuthService implements OnModuleInit {
       res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        maxAge: parseInt(this.configService.get<string>('REFRESH_TOKEN_EXPIRES_IN'), 10),
+        maxAge: refreshTokenMaxAge,
         sameSite: 'lax',
         path: '/'
       })

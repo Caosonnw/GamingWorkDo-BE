@@ -23,12 +23,12 @@ export class ProductsController {
   @Get('get-product-by-id/:product_id')
   @ApiParam({ name: 'product_id', description: 'Product ID' })
   async getProductById(@Param('product_id') product_id) {
-    return await this.productsService.getProductById(product_id)
+    return await this.productsService.getProductById()
   }
 
   @Post('create-product')
   async createProduct(@Body() data: CreateProductWithVariantsDto) {
-    return this.productsService.createProductWithVariants(data)
+    return this.productsService.createProductWithVariants()
   }
 
   @Put('update-product/:product_id')

@@ -14,19 +14,20 @@ model brands {
 }
 
 model cart {
-  cart_id  Int       @id @default(autoincrement())
-  user_id  Int?
-  quantity Int?
-  added_at DateTime? @db.DateTime(0)
-  users    users?    @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "cart_ibfk_1")
+  cart_id          Int               @id @default(autoincrement())
+  user_id          Int?
+  quantity         Int?
+  variant_id       Int?
+  users            users?            @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "cart_ibfk_1")
+  product_variants product_variants? @relation(fields: [variant_id], references: [variant_id], onDelete: NoAction, onUpdate: NoAction, map: "cart_ibfk_2")
 
   @@index([user_id], map: "user_id")
+  @@index([variant_id], map: "variant_id")
 }
 
 model categories {
   category_id   Int        @id @default(autoincrement())
   category_name String?    @db.VarChar(255)
-  description   String?    @db.Text
   products      products[]
 }
 
@@ -56,15 +57,19 @@ model orders {
 }
 
 model product_variants {
-  variant_id    Int       @id @default(autoincrement())
-  product_id    Int?
-  variant_name  String?   @db.VarChar(255)
-  variant_price Int?
-  product_image String?   @db.VarChar(255)
-  stock         Boolean?
-  attributes    Json?
-  created_at    DateTime? @db.DateTime(0)
-  products      products? @relation(fields: [product_id], references: [product_id], onDelete: NoAction, onUpdate: NoAction, map: "product_variants_ibfk_1")
+  variant_id          Int       @id @default(autoincrement())
+  product_id          Int?
+  variant_name        String?   @db.VarChar(255)
+  variant_price       Int?
+  product_image_main  String?   @db.VarChar(255)
+  product_image_hover String?   @db.VarChar(255)
+  product_status      String?   @db.VarChar(50)
+  attributes          Json?
+  rating              Int?
+  update_at           DateTime? @db.DateTime(0)
+  created_at          DateTime? @db.DateTime(0)
+  cart                cart[]
+  products            products? @relation(fields: [product_id], references: [product_id], onDelete: NoAction, onUpdate: NoAction, map: "product_variants_ibfk_1")
 
   @@index([product_id], map: "product_id")
 }
@@ -88,20 +93,43 @@ model products {
 }
 
 model users {
-  user_id       Int       @id @default(autoincrement())
-  email         String?   @db.VarChar(50)
-  full_name     String?   @db.VarChar(50)
-  password      String?   @db.VarChar(255)
-  gender        Boolean?
-  phone_number  Int?
-  date_of_birth DateTime? @db.Date
-  role          String?   @db.VarChar(50)
-  created_by    Int?
-  refresh_token String?   @db.Text
-  cart          cart[]
-  orders        orders[]
-  users         users?    @relation("usersTousers", fields: [created_by], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "users_ibfk_1")
-  other_users   users[]   @relation("usersTousers")
+  user_id                                    Int            @id @default(autoincrement())
+  email                                      String?        @db.VarChar(50)
+  full_name                                  String?        @db.VarChar(50)
+  password                                   String?        @db.VarChar(255)
+  gender                                     Boolean?
+  phone_number                               String?        @db.VarChar(20)
+  date_of_birth                              DateTime?      @db.Date
+  role                                       String?        @db.VarChar(50)
+  created_by                                 Int?
+  refresh_token                              String?        @db.Text
+  cart                                       cart[]
+  messages                                   messages[]
+  orders                                     orders[]
+  user_friends_user_friends_friend_idTousers user_friends[] @relation("user_friends_friend_idTousers")
+  user_friends_user_friends_user_idTousers   user_friends?  @relation("user_friends_user_idTousers")
+  users                                      users?         @relation("usersTousers", fields: [created_by], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "users_ibfk_1")
+  other_users                                users[]        @relation("usersTousers")
 
   @@index([created_by], map: "created_by")
+}
+
+model messages {
+  message_id Int       @id @default(autoincrement())
+  user_id    Int
+  content    String    @db.Text
+  room_id    String?   @db.VarChar(255)
+  create_at  DateTime? @db.DateTime(0)
+  users      users     @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "messages_ibfk_1")
+
+  @@index([user_id], map: "sender_id")
+}
+
+model user_friends {
+  user_id                             Int   @id
+  friend_id                           Int
+  users_user_friends_friend_idTousers users @relation("user_friends_friend_idTousers", fields: [friend_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "user_friends_ibfk_2")
+  users_user_friends_user_idTousers   users @relation("user_friends_user_idTousers", fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction, map: "user_friends_ibfk_3")
+
+  @@index([friend_id], map: "friend_id")
 }

@@ -8,11 +8,21 @@ import { UsersModule } from './users/users.module'
 import { APP_GUARD } from '@nestjs/core'
 import { RolesGuard } from '@/auth/guards/roles/roles.guard'
 import { JwtAuthGuard } from '@/auth/guards/ jwt-auth.guard'
-import { ProductsModule } from './products/products.module';
+import { ProductsModule } from './products/products.module'
+import { CartModule } from './cart/cart.module'
+import { ChatGateway } from './gateway/chat.gateway'
+import { FriendsModule } from './friends/friends.module'
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), AuthModule, UsersModule, ProductsModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    AuthModule,
+    UsersModule,
+    ProductsModule,
+    CartModule,
+    FriendsModule
+  ],
   controllers: [AppController],
-  providers: [AppService, JwtStrategy]
+  providers: [AppService, JwtStrategy, ChatGateway]
 })
 export class AppModule {}

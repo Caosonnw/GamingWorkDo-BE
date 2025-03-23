@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  url      = "mysql://root:1234@157.245.195.25:3306/db_gamingworkdo"
+  url      = env("DATABASE_URL")
 }
 
 model brands {

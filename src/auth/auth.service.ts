@@ -110,8 +110,8 @@ export class AuthService implements OnModuleInit {
       const key = generateRandomString(6)
       const payload = { user_id: user.user_id, role: user.role, key }
 
-      const accessTokenMaxAge = ms(process.env.ACCESS_TOKEN_EXPIRES_IN)
-      const refreshTokenMaxAge = ms(process.env.REFRESH_TOKEN_EXPIRES_IN)
+      const accessTokenMaxAge = ms(process.env.ACCESS_TOKEN_EXPIRES_IN as string)
+      const refreshTokenMaxAge = ms(process.env.REFRESH_TOKEN_EXPIRES_IN as string)
 
       const accessToken = this.jwtService.sign(payload, {
         expiresIn: process.env.ACCESS_TOKEN_EXPIRES_IN,

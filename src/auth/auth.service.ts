@@ -79,7 +79,7 @@ export class AuthService implements OnModuleInit {
       }
 
       await this.prisma.users.create({
-        // data: newData
+        data: newData
       })
       return Response('User created successfully!', HttpStatus.CREATED)
     } catch (error) {

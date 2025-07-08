@@ -1,6 +1,6 @@
 import { ResponseInterceptor } from '@/common/interceptors/response.interceptor'
 import { CreateProductWithVariantsDto } from '@/products/dto/create-product.dto'
-import { Body, Controller, Delete, Get, Param, Patch, Post, Put, UseInterceptors } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Put, UseInterceptors } from '@nestjs/common'
 import { ApiParam, ApiTags } from '@nestjs/swagger'
 import { ProductsService } from './products.service'
 
@@ -22,8 +22,8 @@ export class ProductsController {
 
   @Get('get-product-by-id/:product_id')
   @ApiParam({ name: 'product_id', description: 'Product ID' })
-  async getProductById(@Param('product_id') product_id) {
-    return await this.productsService.getProductById()
+  async getProductById(@Param('product_id', ParseIntPipe) product_id) {
+    return await this.productsService.getProductById(product_id)
   }
 
   @Post('create-product')
